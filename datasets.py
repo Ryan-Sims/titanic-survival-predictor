@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import os
+import re
 
 def find_dataset_files():
     datasets = {}
@@ -35,8 +36,23 @@ print(test_df.head(3))
 
 def clean_dataset(dataset_df: pd.DataFrame):
     
-    def split_name(dataset_df):
-        return " ".join([i.strip('\'\" ().,') for i in dataset_df.split(" ")])
+    def split_name(raw_name):
+    # General pattern for extracting title, last name, and first names
+        pattern = r'(?P<Last_Name>^[^,]+), (?P<Title>\w+\.) [^\(]+(?:\((?P<First_Names>[^\)]+)\)|(?P<First_Names_No_Brackets>.+))$'
+        match = re.match(pattern, raw_name)
+    
+        if match:
+            last_name = match.group('Last_Name').strip()
+            title = match.group('Title').strip()
+            # Handle cases with and without brackets for first names
+            first_names = match.group('First_Names') if match.group('First_Names') else match.group('First_Names_No_Brackets').strip()
+            return {'Title': title, 'Last_Name': last_name, 'First_Names': first_names}
+
+        else:
+            print(f'Unhandled name format: {raw_name}')
+
+            return ['***Unhandled Name Format***']
+
     
     dataset_df["Name"] = dataset_df["Name"].apply(split_name)
     
